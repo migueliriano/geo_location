@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Test geo location</title>
+	<style type="text/css">
+		#btn-location{
+			background-color: #F03F37;
+			padding: 10px;
+			color:#fff;
+			display: inline-block;
+			cursor: pointer;
+		}
+	</style>
+
+</head>
+<body>
+
+<div id="btn-location">CARGAR LOCALIZACION</div>
+<table>
+  <tr>
+    <td>Direccion</td>
+    <td><input type="text" disabled id="street"></input></td>
+  </tr>
+  <tr>
+    <td>Ciudad</td>
+    <td><input type="text" disabled id="city"></input></td>
+  </tr>
+  <tr>
+    <td>ZipCode</td>
+    <td><input type="text" disabled id="zipcode"></input></td>
+  </tr>
+  <tr>
+    <td>Longitud</td>
+    <td><input type="text" disabled id="lng"></input></td>
+  </tr>
+  <tr>
+    <td>Latitud</td>
+    <td><input type="text" disabled id="lat"></input></td>
+  </tr>
+</table>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.0.0.min.js"></script>
+<script type="text/javascript">
+
+  $('#btn-location').click(function(){
+
+    if (navigator.geolocation) {
+      var componentForm = {
+          street_number: ['short_name', 'street'],
+          // route: 'long_name',
+          locality: ['long_name', 'city'],
+          // administrative_area_level_1: 'short_name',
+          // country: 'long_name',
+          postal_code: ['short_name', 'zipcode']
+      };
+      navigator.geolocation.getCurrentPosition(function(position) {
+        var geolocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+      };
+
+      $.get('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + geolocation.lat + ',' + geolocation.lng + '&AIzaSyDB37EkvdsLL2PBPKBi-YqIiRVlSVCphJ4', 
+        function (data){
+
+            if(data.status == "OK"){
+                console.log('data', data);
+                data.results.forEach(function (addressData){
+
+                  for (var i = 0; i < addressData.address_components.length; i++) {
+                    var addressType = addressData.address_components[i].types[0];
+                    console.log("addressType===", addressType);
+                    if (componentForm[addressType]) {
+                      console.log('addressData.address_components[i]===', addressData.address_components[i]);
+                      var val = addressData.address_components[i][componentForm[addressType][0]];
+                      console.log('val==', val);
+                      document.getElementById(componentForm[addressType][1]).value = val;
+                    }
+                  }
+                });
+
+                document.getElementById("lat").value = geolocation.lat;
+                document.getElementById("lng").value = geolocation.lng;
+
+              }else {
+                console.error('Geolocaion error: ', data.error_message);
+              }
+        });
+      });
+    }else {
+      alert("Su navegador no soporta geolocation, favor de actializarlo")
+    }
+  });
+</script>
+</body>
+</html>
